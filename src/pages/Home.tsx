@@ -69,10 +69,10 @@ const Home: React.FC = () => {
         <div className="hero-content">
           <h1 className="hero-title">
             <span className="title-line">SXNCTUARY</span>
-            <span className="title-subtitle">Electronic Music</span>
+            <span className="title-subtitle">Drum'n'Bass Producer</span>
           </h1>
           <p className="hero-description">
-            Pushing the boundaries of electronic music with futuristic soundscapes, 
+            Pushing the boundaries of drum'n'bass with futuristic soundscapes, 
             innovative production techniques, and cutting-edge technology.
           </p>
           <div className="hero-buttons">
