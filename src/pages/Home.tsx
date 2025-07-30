@@ -12,31 +12,31 @@ const Home: React.FC = () => {
     {
       name: 'Bandcamp',
       icon: '/bandcamp.png',
-      url: 'https://bandcamp.com',
+      url: 'https://sxnctuary.bandcamp.com/',
       description: 'Digital music platform'
     },
     {
       name: 'Spotify',
       icon: '/spotify.png',
-      url: 'https://spotify.com',
+      url: 'https://open.spotify.com/artist/1ZNcRJM6QUWh7NKGb5gSOO?si=neXPjBamS5qRhtTMtfBQ1Q',
       description: 'Streaming service'
     },
     {
       name: 'Apple Music',
       icon: '/apple music.png',
-      url: 'https://music.apple.com',
+      url: 'https://music.apple.com/us/artist/sxnctuary/1700935901',
       description: 'Apple\'s music platform'
     },
     {
       name: 'YouTube',
       icon: '/youtube.png',
-      url: 'https://youtube.com',
+      url: 'https://youtube.com/@sxnctuaryy?si=or1m-nHNmSL3kshT',
       description: 'Video platform'
     },
     {
       name: 'SoundCloud',
       icon: '/soundcloud.svg',
-      url: 'https://soundcloud.com',
+      url: 'https://on.soundcloud.com/RfbTZpcu3fy8dGWLqe',
       description: 'Audio sharing platform'
     }
   ]
