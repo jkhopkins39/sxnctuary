@@ -19,7 +19,7 @@ const Footer: React.FC = () => {
             <h4 className="footer-subtitle">Connect</h4>
             <div className="social-links">
               <a 
-                href="https://bandcamp.com" 
+                href="https://sxnctuary.bandcamp.com/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="social-link"
@@ -30,7 +30,7 @@ const Footer: React.FC = () => {
                 <span className="social-text">Bandcamp</span>
               </a>
               <a 
-                href="https://spotify.com" 
+                href="https://open.spotify.com/artist/1ZNcRJM6QUWh7NKGb5gSOO?si=neXPjBamS5qRhtTMtfBQ1Q" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="social-link"
@@ -41,7 +41,7 @@ const Footer: React.FC = () => {
                 <span className="social-text">Spotify</span>
               </a>
               <a 
-                href="https://music.apple.com" 
+                href="https://music.apple.com/us/artist/sxnctuary/1700935901" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="social-link"
@@ -52,7 +52,7 @@ const Footer: React.FC = () => {
                 <span className="social-text">Apple Music</span>
               </a>
               <a 
-                href="https://youtube.com" 
+                href="https://youtube.com/@sxnctuaryy?si=or1m-nHNmSL3kshT" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="social-link"
@@ -63,7 +63,7 @@ const Footer: React.FC = () => {
                 <span className="social-text">YouTube</span>
               </a>
               <a 
-                href="https://soundcloud.com" 
+                href="https://on.soundcloud.com/RfbTZpcu3fy8dGWLqe" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="social-link"
