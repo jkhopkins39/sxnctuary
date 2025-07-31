@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
+import { useContent } from '../contexts/ContentContext'
 import './Home.css'
 
 const Home: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false)
+  const { getContent } = useContent()
 
   useEffect(() => {
     setIsLoaded(true)
@@ -68,12 +70,11 @@ const Home: React.FC = () => {
       <section className="hero">
         <div className="hero-content">
           <h1 className="hero-title">
-            <span className="title-line">SXNCTUARY</span>
-            <span className="title-subtitle">Drum'n'Bass Producer</span>
+            <span className="title-line">{getContent('hero-title')}</span>
+            <span className="title-subtitle">{getContent('hero-subtitle')}</span>
           </h1>
           <p className="hero-description">
-            Pushing the boundaries of drum'n'bass with futuristic soundscapes, 
-            innovative production techniques, and cutting-edge technology.
+            {getContent('hero-description')}
           </p>
           <div className="hero-buttons">
             <a href="#music" className="btn btn-primary">
@@ -138,9 +139,9 @@ const Home: React.FC = () => {
         <div className="release-content">
           <div className="release-info">
             <h2 className="release-title">Latest Release</h2>
-            <h3 className="release-name">"RUNNERS"</h3>
+            <h3 className="release-name">"{getContent('latest-release-name')}"</h3>
             <p className="release-description">
-              My latest drum'n'bass track
+              {getContent('latest-release-description')}
             </p>
             <div className="release-stats">
               <div className="stat">

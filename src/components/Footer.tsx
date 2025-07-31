@@ -1,8 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { useAdmin } from '../contexts/AdminContext'
+import { useContent } from '../contexts/ContentContext'
+import AdminLogin from './AdminLogin'
 import './Footer.css'
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear()
+  const { isAdmin, isAuthenticated } = useAdmin()
+  const { getContent } = useContent()
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   return (
     <footer className="footer">
@@ -11,7 +17,7 @@ const Footer: React.FC = () => {
           <div className="footer-section">
             <h3 className="footer-title">SXNCTUARY</h3>
             <p className="footer-description">
-              Pushing the boundaries of electronic music with futuristic soundscapes and innovative production.
+              {getContent('footer-description')}
             </p>
           </div>
 
@@ -79,12 +85,28 @@ const Footer: React.FC = () => {
 
         <div className="footer-bottom">
           <div className="footer-line"></div>
-          <p className="footer-copyright">
-            © {currentYear} SXNCTUARY. All rights reserved. | 
-            <span className="footer-credits"> Designed with 💚 and code</span>
-          </p>
+          <div className="footer-bottom-content">
+            <p className="footer-copyright">
+              © {currentYear} SXNCTUARY. All rights reserved. | 
+              <span className="footer-credits"> Designed with 💚 and code</span>
+            </p>
+            <button 
+              onClick={() => setShowLoginModal(true)}
+              className="admin-login-btn"
+            >
+              Admin Login
+            </button>
+          </div>
         </div>
       </div>
+      
+      {/* Admin Login Modal */}
+      <AdminLogin 
+        isOpen={showLoginModal && !isAuthenticated} 
+        onClose={() => setShowLoginModal(false)} 
+      />
+      
+
     </footer>
   )
 }

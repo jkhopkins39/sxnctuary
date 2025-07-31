@@ -1,83 +1,22 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useAdmin } from '../contexts/AdminContext'
+import { useContent } from '../contexts/ContentContext'
+import { DatabaseService, Product } from '../services/database'
+import ProductEditModal from '../components/ProductEditModal'
 import './Merch.css'
 
-interface Product {
-  id: number
-  name: string
-  description: string
-  price: number
-  image: string
-  category: string
-  sizes?: string[]
-  colors?: string[]
-}
+
 
 const Merch: React.FC = () => {
+  const { isAdmin } = useAdmin()
+  const { getContent } = useContent()
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [cart, setCart] = useState<{ [key: number]: number }>({})
-
-  const products: Product[] = [
-    {
-      id: 1,
-      name: 'SXNCTUARY Logo T-Shirt',
-      description: 'Premium cotton t-shirt with glowing logo design',
-      price: 29.99,
-      image: '🎽',
-      category: 'clothing',
-      sizes: ['S', 'M', 'L', 'XL'],
-      colors: ['Black', 'Dark Green']
-    },
-    {
-      id: 2,
-      name: 'Digital Dreams Hoodie',
-      description: 'Comfortable hoodie featuring album artwork',
-      price: 49.99,
-      image: '🧥',
-      category: 'clothing',
-      sizes: ['S', 'M', 'L', 'XL'],
-      colors: ['Black', 'Navy']
-    },
-    {
-      id: 3,
-      name: 'Hacker Cap',
-      description: 'Futuristic baseball cap with LED accent',
-      price: 24.99,
-      image: '🧢',
-      category: 'accessories',
-      sizes: ['One Size'],
-      colors: ['Black']
-    },
-    {
-      id: 4,
-      name: 'Glow Stickers Pack',
-      description: 'Set of 10 glow-in-the-dark stickers',
-      price: 9.99,
-      image: '✨',
-      category: 'accessories',
-      sizes: ['One Size'],
-      colors: ['Mixed']
-    },
-    {
-      id: 5,
-      name: 'Digital Dreams Vinyl',
-      description: 'Limited edition vinyl record with digital download',
-      price: 34.99,
-      image: '💿',
-      category: 'music',
-      sizes: ['12"'],
-      colors: ['Clear Green']
-    },
-    {
-      id: 6,
-      name: 'USB Drive Collection',
-      description: '16GB USB with exclusive tracks and artwork',
-      price: 19.99,
-      image: '💾',
-      category: 'music',
-      sizes: ['16GB'],
-      colors: ['Black']
-    }
-  ]
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
 
   const categories = [
     { id: 'all', name: 'All Products' },
@@ -86,9 +25,93 @@ const Merch: React.FC = () => {
     { id: 'music', name: 'Music' }
   ]
 
+  // Load products from database
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setLoading(true)
+        const productsData = await DatabaseService.getAllProducts()
+        setProducts(productsData)
+        
+        // Seed products if none exist
+        if (productsData.length === 0) {
+          await DatabaseService.seedProducts()
+          const seededProducts = await DatabaseService.getAllProducts()
+          setProducts(seededProducts)
+        }
+      } catch (error) {
+        console.error('Error loading products:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadProducts()
+  }, [])
+
   const filteredProducts = selectedCategory === 'all' 
     ? products 
     : products.filter(product => product.category === selectedCategory)
+
+  // Admin functions
+  const handleAddProduct = () => {
+    setEditingProduct(null)
+    setModalMode('create')
+    setShowEditModal(true)
+  }
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product)
+    setModalMode('edit')
+    setShowEditModal(true)
+  }
+
+  const handleDeleteProduct = async (productId: number) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        const success = await DatabaseService.deleteProduct(productId)
+        if (success) {
+          setProducts(products.filter(p => p.id !== productId))
+        }
+      } catch (error) {
+        console.error('Error deleting product:', error)
+      }
+    }
+  }
+
+  const handleSaveProduct = async (product: Product) => {
+    try {
+      if (modalMode === 'create') {
+        const newProduct = await DatabaseService.createProduct({
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          image: product.image,
+          category: product.category,
+          sizes: product.sizes,
+          colors: product.colors
+        })
+        if (newProduct) {
+          setProducts([newProduct, ...products])
+        }
+      } else {
+        const updatedProduct = await DatabaseService.updateProduct(product.id, {
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          image: product.image,
+          category: product.category,
+          sizes: product.sizes,
+          colors: product.colors
+        })
+        if (updatedProduct) {
+          setProducts(products.map(p => p.id === product.id ? updatedProduct : p))
+        }
+      }
+    } catch (error) {
+      console.error('Error saving product:', error)
+    }
+  }
 
   const addToCart = (productId: number) => {
     setCart(prev => ({
@@ -123,10 +146,15 @@ const Merch: React.FC = () => {
   return (
     <div className="merch-page">
       <div className="merch-header">
-        <h1 className="merch-title">SXNCTUARY Merch</h1>
+        <h1 className="merch-title">{getContent('merch-title')}</h1>
         <p className="merch-subtitle">
-          Official merchandise featuring futuristic designs and premium quality
+          {getContent('merch-subtitle')}
         </p>
+        {isAdmin && (
+          <button onClick={handleAddProduct} className="add-product-btn">
+            + Add New Product
+          </button>
+        )}
       </div>
 
       {/* Cart Summary */}
@@ -157,63 +185,87 @@ const Merch: React.FC = () => {
 
       {/* Products Grid */}
       <div className="products-grid">
-        {filteredProducts.map(product => (
-          <div key={product.id} className="product-card">
-            <div className="product-image">
-              <span className="product-emoji">{product.image}</span>
-              <div className="product-glow"></div>
-            </div>
-            
-            <div className="product-info">
-              <h3 className="product-name">{product.name}</h3>
-              <p className="product-description">{product.description}</p>
-              
-              <div className="product-details">
-                {product.sizes && (
-                  <div className="product-sizes">
-                    <span className="detail-label">Sizes:</span>
-                    <span className="detail-value">{product.sizes.join(', ')}</span>
-                  </div>
-                )}
-                {product.colors && (
-                  <div className="product-colors">
-                    <span className="detail-label">Colors:</span>
-                    <span className="detail-value">{product.colors.join(', ')}</span>
-                  </div>
-                )}
+        {loading ? (
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading products...</p>
+          </div>
+        ) : (
+          filteredProducts.map(product => (
+            <div key={product.id} className="product-card">
+              <div className="product-image">
+                <span className="product-emoji">{product.image}</span>
+                <div className="product-glow"></div>
               </div>
               
-              <div className="product-price">${product.price}</div>
-            </div>
-
-            <div className="product-actions">
-              {cart[product.id] ? (
-                <div className="quantity-controls">
-                  <button 
-                    className="quantity-btn"
-                    onClick={() => removeFromCart(product.id)}
-                  >
-                    -
-                  </button>
-                  <span className="quantity">{cart[product.id]}</span>
-                  <button 
-                    className="quantity-btn"
-                    onClick={() => addToCart(product.id)}
-                  >
-                    +
-                  </button>
+              <div className="product-info">
+                <h3 className="product-name">{product.name}</h3>
+                <p className="product-description">{product.description}</p>
+                
+                <div className="product-details">
+                  {product.sizes && (
+                    <div className="product-sizes">
+                      <span className="detail-label">Sizes:</span>
+                      <span className="detail-value">{product.sizes.join(', ')}</span>
+                    </div>
+                  )}
+                  {product.colors && (
+                    <div className="product-colors">
+                      <span className="detail-label">Colors:</span>
+                      <span className="detail-value">{product.colors.join(', ')}</span>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <button 
-                  className="btn btn-primary add-to-cart-btn"
-                  onClick={() => addToCart(product.id)}
-                >
-                  Add to Cart
-                </button>
-              )}
+                
+                <div className="product-price">${product.price}</div>
+              </div>
+
+              <div className="product-actions">
+                {isAdmin ? (
+                  <div className="admin-actions">
+                    <button 
+                      className="edit-btn"
+                      onClick={() => handleEditProduct(product)}
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      className="delete-btn"
+                      onClick={() => handleDeleteProduct(product.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ) : (
+                  cart[product.id] ? (
+                    <div className="quantity-controls">
+                      <button 
+                        className="quantity-btn"
+                        onClick={() => removeFromCart(product.id)}
+                      >
+                        -
+                      </button>
+                      <span className="quantity">{cart[product.id]}</span>
+                      <button 
+                        className="quantity-btn"
+                        onClick={() => addToCart(product.id)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      className="btn btn-primary add-to-cart-btn"
+                      onClick={() => addToCart(product.id)}
+                    >
+                      Add to Cart
+                    </button>
+                  )
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Empty State */}
@@ -252,6 +304,15 @@ const Merch: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Product Edit Modal */}
+      <ProductEditModal
+        product={editingProduct || undefined}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleSaveProduct}
+        mode={modalMode}
+      />
     </div>
   )
 }
