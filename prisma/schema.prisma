@@ -18,7 +18,7 @@ model Product {
   name        String
   description String
   price       Float
-  image       String
+  images      String   // JSON string of images array (up to 4)
   category    String
   sizes       String?  // JSON string of sizes array
   colors      String?  // JSON string of colors array

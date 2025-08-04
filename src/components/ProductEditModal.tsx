@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Product, CreateProductData, UpdateProductData } from '../services/database'
+import React, { useState, useRef } from 'react'
+import { Product, CreateProductData, UpdateProductData, DatabaseService } from '../services/database'
 import './ProductEditModal.css'
 
 interface ProductEditModalProps {
@@ -21,7 +21,7 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
     name: product?.name || '',
     description: product?.description || '',
     price: product?.price || 0,
-    image: product?.image || '🎽',
+    images: product?.images || [''],
     category: product?.category || 'clothing',
     sizes: product?.sizes || ['S', 'M', 'L', 'XL'],
     colors: product?.colors || ['Black']
@@ -29,12 +29,16 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
   const [sizesInput, setSizesInput] = useState(product?.sizes?.join(', ') || 'S, M, L, XL')
   const [colorsInput, setColorsInput] = useState(product?.colors?.join(', ') || 'Black')
+  const [uploadedImages, setUploadedImages] = useState<string[]>(product?.images || [])
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     const processedData = {
       ...formData,
+      images: uploadedImages,
       sizes: sizesInput.split(',').map(s => s.trim()).filter(s => s),
       colors: colorsInput.split(',').map(c => c.trim()).filter(c => c)
     }
@@ -54,18 +58,45 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
     onClose()
   }
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+
+    // Check if adding these files would exceed 4 total images
+    if (uploadedImages.length + files.length > 4) {
+      alert('You can only upload up to 4 images total')
+      return
+    }
+
+    setIsUploading(true)
+    try {
+      const imageUrls = await DatabaseService.uploadImages(files)
+      setUploadedImages(prev => [...prev, ...imageUrls])
+    } catch (error) {
+      console.error('Error uploading images:', error)
+      alert('Failed to upload images. Please try again.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index))
+  }
+
   const handleClose = () => {
     setFormData({
       name: product?.name || '',
       description: product?.description || '',
       price: product?.price || 0,
-      image: product?.image || '🎽',
+      images: product?.images || [''],
       category: product?.category || 'clothing',
       sizes: product?.sizes || ['S', 'M', 'L', 'XL'],
       colors: product?.colors || ['Black']
     })
     setSizesInput(product?.sizes?.join(', ') || 'S, M, L, XL')
     setColorsInput(product?.colors?.join(', ') || 'Black')
+    setUploadedImages(product?.images || [])
     onClose()
   }
 
@@ -127,14 +158,46 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
           </div>
           
           <div className="form-group">
-            <label>Image Emoji</label>
-            <input
-              type="text"
-              value={formData.image}
-              onChange={(e) => setFormData({...formData, image: e.target.value})}
-              placeholder="🎽"
-              required
-            />
+            <label>Images (Upload up to 4 images)</label>
+            <div className="image-upload-section">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+              <button
+                type="button"
+                className="upload-btn"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading || uploadedImages.length >= 4}
+              >
+                {isUploading ? 'Uploading...' : 'Choose Images'}
+              </button>
+              <small className="form-help">
+                {uploadedImages.length}/4 images uploaded. The first image will be the main display image.
+              </small>
+            </div>
+            
+            {/* Image Preview */}
+            {uploadedImages.length > 0 && (
+              <div className="image-preview-grid">
+                {uploadedImages.map((imageUrl, index) => (
+                  <div key={index} className="image-preview-item">
+                    <img src={imageUrl} alt={`Preview ${index + 1}`} />
+                    <button
+                      type="button"
+                      className="remove-image-btn"
+                      onClick={() => removeImage(index)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           
           <div className="form-group">

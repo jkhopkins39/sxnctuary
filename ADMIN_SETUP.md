@@ -17,6 +17,7 @@ To set up the admin system, you need to configure the following environment vari
 
 1. `VITE_ADMIN_USERNAME` - The admin username
 2. `VITE_ADMIN_PASSWORD` - The admin password
+3. `IMGBB_API_KEY` - API key for image uploads (see IMAGE_UPLOAD_SETUP.md)
 
 ### Setting up in Vercel
 
@@ -30,6 +31,10 @@ To set up the admin system, you need to configure the following environment vari
    
    - Name: `VITE_ADMIN_PASSWORD`
    - Value: Your secure admin password
+   - Environment: Production (and Preview if needed)
+   
+   - Name: `IMGBB_API_KEY`
+   - Value: Your ImgBB API key
    - Environment: Production (and Preview if needed)
 
 5. Redeploy your application
@@ -70,6 +75,7 @@ For local development, create a `.env` file in the root directory with:
 ```
 VITE_ADMIN_USERNAME=admin
 VITE_ADMIN_PASSWORD=your_password_here
+IMGBB_API_KEY=your_imgbb_api_key_here
 ```
 
 ## File Structure

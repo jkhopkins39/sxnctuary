@@ -40,3 +40,9 @@ coverage/
 
 # Vercel
 .vercel 
+.vercel
+
+/src/generated/prisma
+
+# Uploaded files (no longer needed with cloud storage)
+# uploads/

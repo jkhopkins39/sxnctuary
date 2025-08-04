@@ -3,6 +3,7 @@ import { useAdmin } from '../contexts/AdminContext'
 import { useContent } from '../contexts/ContentContext'
 import { DatabaseService, Product } from '../services/database'
 import ProductEditModal from '../components/ProductEditModal'
+import ProductDetailModal from '../components/ProductDetailModal'
 import './Merch.css'
 
 
@@ -17,6 +18,8 @@ const Merch: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
+  const [showDetailModal, setShowDetailModal] = useState(false)
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null)
 
   const categories = [
     { id: 'all', name: 'All Products' },
@@ -86,7 +89,7 @@ const Merch: React.FC = () => {
           name: product.name,
           description: product.description,
           price: product.price,
-          image: product.image,
+          images: product.images,
           category: product.category,
           sizes: product.sizes,
           colors: product.colors
@@ -99,7 +102,7 @@ const Merch: React.FC = () => {
           name: product.name,
           description: product.description,
           price: product.price,
-          image: product.image,
+          images: product.images,
           category: product.category,
           sizes: product.sizes,
           colors: product.colors
@@ -111,6 +114,11 @@ const Merch: React.FC = () => {
     } catch (error) {
       console.error('Error saving product:', error)
     }
+  }
+
+  const handleViewProduct = (product: Product) => {
+    setViewingProduct(product)
+    setShowDetailModal(true)
   }
 
   const addToCart = (productId: number) => {
@@ -193,10 +201,24 @@ const Merch: React.FC = () => {
         ) : (
           filteredProducts.map(product => (
             <div key={product.id} className="product-card">
-              <div className="product-image">
-                <span className="product-emoji">{product.image}</span>
-                <div className="product-glow"></div>
-              </div>
+                          <div className="product-image">
+              {product.images && product.images.length > 0 ? (
+                <img 
+                  src={product.images[0]} 
+                  alt={product.name}
+                  className="product-main-image"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://via.placeholder.com/200x200/333/666?text=No+Image'
+                  }}
+                />
+              ) : (
+                <div className="no-image-placeholder">
+                  <span>📷</span>
+                  <p>No Image</p>
+                </div>
+              )}
+              <div className="product-glow"></div>
+            </div>
               
               <div className="product-info">
                 <h3 className="product-name">{product.name}</h3>
@@ -221,47 +243,56 @@ const Merch: React.FC = () => {
               </div>
 
               <div className="product-actions">
-                {isAdmin ? (
-                  <div className="admin-actions">
-                    <button 
-                      className="edit-btn"
-                      onClick={() => handleEditProduct(product)}
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      className="delete-btn"
-                      onClick={() => handleDeleteProduct(product.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ) : (
-                  cart[product.id] ? (
-                    <div className="quantity-controls">
+                <div className="action-buttons">
+                  <button 
+                    className="view-btn"
+                    onClick={() => handleViewProduct(product)}
+                  >
+                    View
+                  </button>
+                  
+                  {isAdmin ? (
+                    <>
                       <button 
-                        className="quantity-btn"
-                        onClick={() => removeFromCart(product.id)}
+                        className="edit-btn"
+                        onClick={() => handleEditProduct(product)}
                       >
-                        -
+                        Edit
                       </button>
-                      <span className="quantity">{cart[product.id]}</span>
                       <button 
-                        className="quantity-btn"
+                        className="delete-btn"
+                        onClick={() => handleDeleteProduct(product.id)}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  ) : (
+                    cart[product.id] ? (
+                      <div className="quantity-controls">
+                        <button 
+                          className="quantity-btn"
+                          onClick={() => removeFromCart(product.id)}
+                        >
+                          -
+                        </button>
+                        <span className="quantity">{cart[product.id]}</span>
+                        <button 
+                          className="quantity-btn"
+                          onClick={() => addToCart(product.id)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        className="btn btn-primary add-to-cart-btn"
                         onClick={() => addToCart(product.id)}
                       >
-                        +
+                        Add to Cart
                       </button>
-                    </div>
-                  ) : (
-                    <button 
-                      className="btn btn-primary add-to-cart-btn"
-                      onClick={() => addToCart(product.id)}
-                    >
-                      Add to Cart
-                    </button>
-                  )
-                )}
+                    )
+                  )}
+                </div>
               </div>
             </div>
           ))
@@ -312,6 +343,13 @@ const Merch: React.FC = () => {
         onClose={() => setShowEditModal(false)}
         onSave={handleSaveProduct}
         mode={modalMode}
+      />
+
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        product={viewingProduct!}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
       />
     </div>
   )

@@ -1,6 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
+const FormData = require('form-data');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -8,6 +13,83 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// Configure multer for temporary file storage
+const storage = multer.memoryStorage();
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    // Accept only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
+
+// ImgBB API key (you'll need to get a free API key from https://api.imgbb.com/)
+const IMGBB_API_KEY = process.env.IMGBB_API_KEY || 'a4b8cbc7d5d18b5952be1bbfad0c1ae7'; // Replace with your actual API key
+
+// Function to upload image to ImgBB
+async function uploadToImgBB(imageBuffer, filename) {
+  try {
+    const formData = new FormData();
+    formData.append('image', imageBuffer, {
+      filename: filename,
+      contentType: 'image/jpeg'
+    });
+
+    const response = await axios.post(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, formData, {
+      headers: {
+        ...formData.getHeaders(),
+      },
+    });
+
+    if (response.data.success) {
+      return response.data.data.url;
+    } else {
+      throw new Error('Failed to upload to ImgBB');
+    }
+  } catch (error) {
+    console.error('Error uploading to ImgBB:', error);
+    throw error;
+  }
+}
+
+// Upload images endpoint
+app.post('/api/upload', upload.array('images', 4), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+    
+    const uploadedUrls = [];
+    
+    for (const file of req.files) {
+      try {
+        const imageUrl = await uploadToImgBB(file.buffer, file.originalname);
+        uploadedUrls.push(imageUrl);
+      } catch (error) {
+        console.error(`Error uploading ${file.originalname}:`, error);
+        return res.status(500).json({ error: `Failed to upload ${file.originalname}` });
+      }
+    }
+    
+    res.json({ 
+      success: true, 
+      files: uploadedUrls.map(url => ({ url })),
+      message: `${uploadedUrls.length} file(s) uploaded successfully`
+    });
+  } catch (error) {
+    console.error('Error uploading files:', error);
+    res.status(500).json({ error: 'Failed to upload files' });
+  }
+});
 
 // Get all products
 app.get('/api/products', async (req, res) => {
@@ -18,6 +100,7 @@ app.get('/api/products', async (req, res) => {
     
     const formattedProducts = products.map(product => ({
       ...product,
+      images: product.images ? JSON.parse(product.images) : [],
       sizes: product.sizes ? JSON.parse(product.sizes) : undefined,
       colors: product.colors ? JSON.parse(product.colors) : undefined
     }));
@@ -42,6 +125,7 @@ app.get('/api/products/:id', async (req, res) => {
     
     const formattedProduct = {
       ...product,
+      images: product.images ? JSON.parse(product.images) : [],
       sizes: product.sizes ? JSON.parse(product.sizes) : undefined,
       colors: product.colors ? JSON.parse(product.colors) : undefined
     };
@@ -56,14 +140,14 @@ app.get('/api/products/:id', async (req, res) => {
 // Create new product
 app.post('/api/products', async (req, res) => {
   try {
-    const { name, description, price, image, category, sizes, colors } = req.body;
+    const { name, description, price, images, category, sizes, colors } = req.body;
     
     const product = await prisma.product.create({
       data: {
         name,
         description,
         price: parseFloat(price),
-        image,
+        images: JSON.stringify(images),
         category,
         sizes: sizes ? JSON.stringify(sizes) : null,
         colors: colors ? JSON.stringify(colors) : null
@@ -72,6 +156,7 @@ app.post('/api/products', async (req, res) => {
     
     const formattedProduct = {
       ...product,
+      images: product.images ? JSON.parse(product.images) : [],
       sizes: product.sizes ? JSON.parse(product.sizes) : undefined,
       colors: product.colors ? JSON.parse(product.colors) : undefined
     };
@@ -86,9 +171,12 @@ app.post('/api/products', async (req, res) => {
 // Update product
 app.put('/api/products/:id', async (req, res) => {
   try {
-    const { name, description, price, image, category, sizes, colors } = req.body;
+    const { name, description, price, images, category, sizes, colors } = req.body;
     
-    const updateData = { name, description, price: parseFloat(price), image, category };
+    const updateData = { name, description, price: parseFloat(price), category };
+    if (images !== undefined) {
+      updateData.images = JSON.stringify(images);
+    }
     if (sizes !== undefined) {
       updateData.sizes = JSON.stringify(sizes);
     }
@@ -103,6 +191,7 @@ app.put('/api/products/:id', async (req, res) => {
     
     const formattedProduct = {
       ...product,
+      images: product.images ? JSON.parse(product.images) : [],
       sizes: product.sizes ? JSON.parse(product.sizes) : undefined,
       colors: product.colors ? JSON.parse(product.colors) : undefined
     };
@@ -141,7 +230,7 @@ app.post('/api/seed', async (req, res) => {
         name: 'SXNCTUARY Logo T-Shirt',
         description: 'Premium cotton t-shirt with glowing logo design',
         price: 29.99,
-        image: '🎽',
+        images: [],
         category: 'clothing',
         sizes: ['S', 'M', 'L', 'XL'],
         colors: ['Black', 'Dark Green']
@@ -150,7 +239,7 @@ app.post('/api/seed', async (req, res) => {
         name: 'Digital Dreams Hoodie',
         description: 'Comfortable hoodie featuring album artwork',
         price: 49.99,
-        image: '🧥',
+        images: [],
         category: 'clothing',
         sizes: ['S', 'M', 'L', 'XL'],
         colors: ['Black', 'Navy']
@@ -159,7 +248,7 @@ app.post('/api/seed', async (req, res) => {
         name: 'Hacker Cap',
         description: 'Futuristic baseball cap with LED accent',
         price: 24.99,
-        image: '🧢',
+        images: [],
         category: 'accessories',
         sizes: ['One Size'],
         colors: ['Black']
@@ -168,7 +257,7 @@ app.post('/api/seed', async (req, res) => {
         name: 'Glow Stickers Pack',
         description: 'Set of 10 glow-in-the-dark stickers',
         price: 9.99,
-        image: '✨',
+        images: [],
         category: 'accessories',
         sizes: ['One Size'],
         colors: ['Mixed']
@@ -177,7 +266,7 @@ app.post('/api/seed', async (req, res) => {
         name: 'Digital Dreams Vinyl',
         description: 'Limited edition vinyl record with digital download',
         price: 34.99,
-        image: '💿',
+        images: [],
         category: 'music',
         sizes: ['12"'],
         colors: ['Clear Green']
@@ -186,7 +275,7 @@ app.post('/api/seed', async (req, res) => {
         name: 'USB Drive Collection',
         description: '16GB USB with exclusive tracks and artwork',
         price: 19.99,
-        image: '💾',
+        images: [],
         category: 'music',
         sizes: ['16GB'],
         colors: ['Black']
@@ -197,6 +286,7 @@ app.post('/api/seed', async (req, res) => {
       await prisma.product.create({
         data: {
           ...product,
+          images: JSON.stringify(product.images),
           sizes: JSON.stringify(product.sizes),
           colors: JSON.stringify(product.colors)
         }

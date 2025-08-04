@@ -5,7 +5,7 @@ export interface Product {
   name: string
   description: string
   price: number
-  image: string
+  images: string[]
   category: string
   sizes?: string[]
   colors?: string[]
@@ -15,7 +15,7 @@ export interface CreateProductData {
   name: string
   description: string
   price: number
-  image: string
+  images: string[]
   category: string
   sizes?: string[]
   colors?: string[]
@@ -25,7 +25,7 @@ export interface UpdateProductData {
   name?: string
   description?: string
   price?: number
-  image?: string
+  images?: string[]
   category?: string
   sizes?: string[]
   colors?: string[]
@@ -116,6 +116,31 @@ export class DatabaseService {
       }
     } catch (error) {
       console.error('Error seeding products:', error)
+    }
+  }
+
+  // Upload images
+  static async uploadImages(files: File[]): Promise<string[]> {
+    try {
+      const formData = new FormData()
+      files.forEach(file => {
+        formData.append('images', file)
+      })
+
+      const response = await fetch(`${API_BASE_URL}/upload`, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to upload images')
+      }
+
+      const result = await response.json()
+      return result.files.map((file: any) => file.url)
+    } catch (error) {
+      console.error('Error uploading images:', error)
+      throw error
     }
   }
 } 
