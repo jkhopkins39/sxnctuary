@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
@@ -297,6 +298,68 @@ app.post('/api/seed', async (req, res) => {
   } catch (error) {
     console.error('Error seeding products:', error);
     res.status(500).json({ error: 'Failed to seed products' });
+  }
+});
+
+// Content management endpoints
+app.get('/api/content', async (req, res) => {
+  try {
+    const content = await prisma.content.findMany();
+    res.json(content);
+  } catch (error) {
+    console.error('Error fetching content:', error);
+    res.status(500).json({ error: 'Failed to fetch content' });
+  }
+});
+
+app.post('/api/content', async (req, res) => {
+  try {
+    const { id, value } = req.body;
+    
+    // Upsert content (create if doesn't exist, update if it does)
+    const content = await prisma.content.upsert({
+      where: { id },
+      update: { value },
+      create: { id, value }
+    });
+    
+    res.json(content);
+  } catch (error) {
+    console.error('Error saving content:', error);
+    res.status(500).json({ error: 'Failed to save content' });
+  }
+});
+
+// Seed content
+app.post('/api/seed-content', async (req, res) => {
+  try {
+    const existingContent = await prisma.content.count();
+    if (existingContent > 0) {
+      return res.json({ message: 'Content already seeded' });
+    }
+
+    const initialContent = [
+      { id: 'hero-title', value: 'SXNCTUARY' },
+      { id: 'hero-subtitle', value: 'Drum\'n\'Bass Producer' },
+      { id: 'hero-description', value: 'Pushing the boundaries of drum\'n\'bass with futuristic soundscapes, innovative production techniques, and cutting-edge technology.' },
+      { id: 'latest-release-name', value: 'RUNNERS' },
+      { id: 'latest-release-description', value: 'My latest drum\'n\'bass track' },
+      { id: 'latest-release-image', value: '/IMG_3220.jpg' },
+      { id: 'merch-title', value: 'SXNCTUARY Merch' },
+      { id: 'merch-subtitle', value: 'Official merchandise featuring futuristic designs and premium quality' },
+      { id: 'footer-description', value: 'Pushing the boundaries of electronic music with futuristic soundscapes and innovative production.' }
+    ];
+
+    for (const content of initialContent) {
+      await prisma.content.create({
+        data: content
+      });
+    }
+
+    res.json({ message: 'Content seeded successfully' });
+  } catch (error) {
+    console.error('Error seeding content:', error);
+    res.status(500).json({ error: 'Failed to seed content' });
   }
 });
 

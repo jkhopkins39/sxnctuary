@@ -1,14 +1,107 @@
-import React, { useEffect, useState } from 'react'
-import { useContent } from '../contexts/ContentContext'
-import './Home.css'
+import React, { useState, useEffect } from 'react';
+import { useContent } from '../contexts/ContentContext';
+import { useLatestReleaseImage } from '../contexts/LatestReleaseImageContext';
+import LatestReleaseImageEdit from '../components/LatestReleaseImageEdit';
+import emailjs from '@emailjs/browser';
+import './Home.css';
 
 const Home: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false)
+  const [videoLoaded, setVideoLoaded] = useState(false)
+  const [videoEnabled, setVideoEnabled] = useState(true)
+  const [newsletterEmail, setNewsletterEmail] = useState('')
+  const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const { getContent } = useContent()
+  const { imageUrl } = useLatestReleaseImage()
 
   useEffect(() => {
     setIsLoaded(true)
+    
+    // Check if video should be disabled (for performance)
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const isMobile = window.innerWidth < 768
+    const isLowEndDevice = navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4
+    
+    if (prefersReducedMotion || isMobile || isLowEndDevice) {
+      setVideoEnabled(false)
+      setVideoLoaded(true) // Skip loading state
+    }
   }, [])
+
+  const handleVideoLoad = () => {
+    setVideoLoaded(true)
+  }
+
+  const handleVideoError = () => {
+    console.log('Video failed to load, using fallback background')
+    setVideoEnabled(false)
+    setVideoLoaded(true) // Still set to true so we don't show loading state
+  }
+
+  const toggleVideo = () => {
+    setVideoEnabled(!videoEnabled)
+    if (!videoEnabled) {
+      setVideoLoaded(false) // Reset loading state if re-enabling
+    }
+  }
+
+  const handleCanPlayThrough = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget
+    // Check if video has enough data buffered
+    if (video.buffered.length > 0 && video.buffered.end(0) >= video.duration * 0.5) {
+      setVideoLoaded(true)
+    }
+  }
+
+  const handleVideoEnded = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget
+    // Ensure video loops by restarting it
+    video.currentTime = 0
+    video.play().catch(err => console.log('Video loop restart failed:', err))
+  }
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!newsletterEmail || !newsletterEmail.includes('@')) {
+      setNewsletterStatus('error')
+      return
+    }
+
+    setNewsletterStatus('loading')
+
+    try {
+      // EmailJS configuration - you'll need to add these to your .env file
+      const serviceId = process.env.REACT_APP_EMAILJS_SERVICE_ID || 'your_service_id'
+      const templateId = process.env.REACT_APP_EMAILJS_TEMPLATE_ID || 'your_template_id'
+      const publicKey = process.env.REACT_APP_EMAILJS_PUBLIC_KEY || 'your_public_key'
+
+      const templateParams = {
+        to_email: 'sxnctuaryy8@gmail.com',
+        subscriber_email: newsletterEmail,
+        message: `New newsletter subscriber: ${newsletterEmail}`,
+        subscribed_at: new Date().toLocaleString()
+      }
+
+      const result = await emailjs.send(serviceId, templateId, templateParams, publicKey)
+      
+      if (result.status === 200) {
+        setNewsletterStatus('success')
+        setNewsletterEmail('')
+        // Reset success message after 3 seconds
+        setTimeout(() => setNewsletterStatus('idle'), 3000)
+      } else {
+        setNewsletterStatus('error')
+        // Reset error message after 3 seconds
+        setTimeout(() => setNewsletterStatus('idle'), 3000)
+      }
+    } catch (error) {
+      console.error('Newsletter subscription error:', error)
+      setNewsletterStatus('error')
+      // Reset error message after 3 seconds
+      setTimeout(() => setNewsletterStatus('idle'), 3000)
+    }
+  }
 
   const musicPlatforms = [
     {
@@ -40,6 +133,12 @@ const Home: React.FC = () => {
       icon: '/soundcloud.svg',
       url: 'https://on.soundcloud.com/RfbTZpcu3fy8dGWLqe',
       description: 'Audio sharing platform'
+    },
+    {
+      name: 'Instagram',
+      icon: '/instagram.png',
+      url: 'https://www.instagram.com/sxnctuaryyyy/',
+      description: 'Social media platform'
     }
   ]
 
@@ -68,6 +167,47 @@ const Home: React.FC = () => {
 
       {/* Hero Section */}
       <section className="hero">
+        {/* Video Background */}
+        <div className="hero-video-background">
+          {videoEnabled && !videoLoaded && (
+            <div className="video-loading-placeholder">
+              <div className="loading-spinner"></div>
+            </div>
+          )}
+          {videoEnabled ? (
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              poster="/hero-background-poster.jpg"
+              className="hero-video"
+              onLoadedData={handleVideoLoad}
+              onCanPlayThrough={handleCanPlayThrough}
+              onError={handleVideoError}
+              onEnded={handleVideoEnded} // Ensure looping
+              style={{ opacity: videoLoaded ? 1 : 0 }}
+            >
+              <source src="/hero-background.mp4" type="video/mp4" />
+              <source src="/hero-background.webm" type="video/webm" />
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <div className="hero-static-background"></div>
+          )}
+          <div className="hero-video-overlay"></div>
+          
+          {/* Video Toggle Button */}
+          <button 
+            className="video-toggle-btn"
+            onClick={toggleVideo}
+            title={videoEnabled ? "Disable video (if choppy)" : "Enable video"}
+          >
+            {videoEnabled ? "🎬" : "🖼️"}
+          </button>
+        </div>
+        
         <div className="hero-content">
           <h1 className="hero-title">
             <span className="title-line">{getContent('hero-title')}</span>
@@ -161,12 +301,13 @@ const Home: React.FC = () => {
           <div className="release-visual">
             <div className="album-cover">
               <img 
-                src="/IMG_3220.jpg" 
-                alt="RUNNERS Album Cover" 
+                src={imageUrl} 
+                alt="Latest Release Album Cover" 
                 className="album-cover-image"
               />
               <div className="cover-glow"></div>
             </div>
+            <LatestReleaseImageEdit />
           </div>
         </div>
       </section>
@@ -178,16 +319,21 @@ const Home: React.FC = () => {
           <p className="newsletter-description">
             Get notified about new releases, exclusive content, and upcoming shows.
           </p>
-          <form className="newsletter-form">
+          <form className="newsletter-form" onSubmit={handleNewsletterSubmit}>
             <input
               type="email"
               placeholder="Enter your email"
               className="newsletter-input"
               required
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
             />
             <button type="submit" className="btn btn-primary">
               Subscribe
             </button>
+            {newsletterStatus === 'loading' && <p className="newsletter-status loading">Loading...</p>}
+            {newsletterStatus === 'success' && <p className="newsletter-status success">Subscribed!</p>}
+            {newsletterStatus === 'error' && <p className="newsletter-status error">Failed to subscribe.</p>}
           </form>
         </div>
       </section>

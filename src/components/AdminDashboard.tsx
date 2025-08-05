@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useAdmin } from '../contexts/AdminContext'
+import { useContent } from '../contexts/ContentContext'
+import { DatabaseService } from '../services/database'
 import './AdminDashboard.css'
 
 interface Product {
@@ -23,6 +25,7 @@ interface ContentField {
 
 const AdminDashboard: React.FC = () => {
   const { logout } = useAdmin()
+  const { contentFields, updateContent } = useContent()
   const [activeTab, setActiveTab] = useState<'merch' | 'content'>('merch')
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [editingContent, setEditingContent] = useState<ContentField | null>(null)
@@ -51,45 +54,6 @@ const AdminDashboard: React.FC = () => {
     }
   ])
 
-  // Mock content data - in a real app, this would come from an API
-  const [contentFields, setContentFields] = useState<ContentField[]>([
-    {
-      id: 'hero-title',
-      label: 'Hero Title',
-      value: 'SXNCTUARY',
-      type: 'text',
-      location: 'Home Page'
-    },
-    {
-      id: 'hero-subtitle',
-      label: 'Hero Subtitle',
-      value: 'Drum\'n\'Bass Producer',
-      type: 'text',
-      location: 'Home Page'
-    },
-    {
-      id: 'hero-description',
-      label: 'Hero Description',
-      value: 'Pushing the boundaries of drum\'n\'bass with futuristic soundscapes, innovative production techniques, and cutting-edge technology.',
-      type: 'textarea',
-      location: 'Home Page'
-    },
-    {
-      id: 'latest-release-name',
-      label: 'Latest Release Name',
-      value: 'RUNNERS',
-      type: 'text',
-      location: 'Home Page'
-    },
-    {
-      id: 'latest-release-description',
-      label: 'Latest Release Description',
-      value: 'My latest drum\'n\'bass track',
-      type: 'textarea',
-      location: 'Home Page'
-    }
-  ])
-
   const handleAddProduct = () => {
     const newProduct: Product = {
       id: Date.now(),
@@ -109,13 +73,11 @@ const AdminDashboard: React.FC = () => {
   }
 
   const handleDeleteProduct = (productId: number) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      setProducts(products.filter(p => p.id !== productId))
-    }
+    setProducts(products.filter(p => p.id !== productId))
   }
 
   const handleSaveProduct = (product: Product) => {
-    if (editingProduct?.id) {
+    if (product.id && products.find(p => p.id === product.id)) {
       // Update existing product
       setProducts(products.map(p => p.id === product.id ? product : p))
     } else {
@@ -129,9 +91,14 @@ const AdminDashboard: React.FC = () => {
     setEditingContent(content)
   }
 
-  const handleSaveContent = (content: ContentField) => {
-    setContentFields(contentFields.map(c => c.id === content.id ? content : c))
-    setEditingContent(null)
+  const handleSaveContent = async (content: ContentField) => {
+    try {
+      await updateContent(content.id, content.value)
+      setEditingContent(null)
+    } catch (error) {
+      console.error('Error saving content:', error)
+      alert('Failed to save content. Please try again.')
+    }
   }
 
   return (

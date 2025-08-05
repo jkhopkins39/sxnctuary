@@ -1,0 +1,31 @@
+.edit-image-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(45deg, #00ff41, #00cc33);
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  color: #000;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.edit-image-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 255, 65, 0.4);
+}
+
+.edit-image-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Make sure the album cover container has relative positioning */
+.album-cover {
+  position: relative;
+} 

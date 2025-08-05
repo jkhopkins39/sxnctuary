@@ -1,6 +1,8 @@
 .home {
   min-height: 100vh;
-  padding-top: 70px;
+  padding-top: 0; /* Remove top padding since hero extends to top */
+  width: 100%;
+  position: relative;
 }
 
 .home.loaded .hero {
@@ -9,18 +11,156 @@
 
 /* Hero Section */
 .hero {
-  min-height: calc(100vh - 70px);
+  min-height: 110vh; /* Increased from 100vh to 110vh to extend further */
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 40px 0;
   position: relative;
+  overflow: hidden; /* Keep hidden to contain video */
+  background: linear-gradient(135deg, rgba(0, 255, 65, 0.05) 0%, rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.3) 100%);
+  margin-top: -70px; /* Extend to top below navbar */
+  padding-top: 110px; /* Add padding to account for navbar */
+  width: 100vw; /* Full viewport width */
+  margin-left: calc(-50vw + 50%); /* Center and extend to edges */
+  max-width: none; /* Remove max-width constraint */
+}
+
+/* Video Background - Separate layer for hero only */
+.hero-video-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw; /* Full viewport width */
+  height: 100%;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+}
+
+/* Video Toggle Button */
+.video-toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid var(--accent-green);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  color: var(--accent-green);
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-toggle-btn:hover {
+  background: rgba(0, 255, 65, 0.2);
+  transform: scale(1.1);
+}
+
+/* Static Background Fallback */
+.hero-static-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.6) 100%),
+    radial-gradient(circle at 20% 80%, rgba(0, 255, 65, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(0, 255, 65, 0.1) 0%, transparent 50%);
+  z-index: 1;
+}
+
+/* Video Loading Placeholder */
+.video-loading-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(0, 255, 65, 0.3);
+  border-top: 3px solid var(--accent-green);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  /* Additional performance optimizations */
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+  /* Ensure smooth playback */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  /* Smooth transition when video loads */
+  transition: opacity 0.5s ease-in-out;
+  /* Additional video optimizations */
+  -webkit-video-playable-inline: true;
+  -webkit-playsinline: true;
+  /* Force hardware acceleration */
+  -webkit-transform3d: translateZ(0);
+  transform3d: translateZ(0);
+  /* Reduce motion for better performance */
+  -webkit-reduce-motion: reduce;
+  /* Optimize for performance */
+  -webkit-optimize-contrast: true;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Ensure smooth looping */
+  -webkit-loop: true;
+  -webkit-loop-count: infinite;
+  -webkit-loop-delay: 0;
+}
+
+.hero-video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, 
+    rgba(0, 255, 65, 0.15) 0%, 
+    rgba(0, 0, 0, 0.4) 30%, 
+    rgba(0, 0, 0, 0.6) 70%, 
+    rgba(0, 0, 0, 0.8) 100%);
+  z-index: 2;
 }
 
 .hero-content {
   flex: 1;
   max-width: 600px;
-  z-index: 2;
+  z-index: 3;
+  position: relative;
+  padding-left: 40px; /* Add left padding to keep text away from screen edge */
 }
 
 .hero-title {
@@ -82,6 +222,7 @@
   justify-content: center;
   align-items: center;
   position: relative;
+  z-index: 3;
 }
 
 .visual-element {
@@ -152,8 +293,10 @@
 
 /* Music Platforms Section */
 .music-section {
-  padding: 80px 0;
+  padding: 80px 0; /* Remove horizontal padding since container handles it */
   position: relative;
+  max-width: 1200px; /* Restore max-width for content */
+  margin: 0 auto; /* Center the content */
 }
 
 .section-header {
@@ -265,9 +408,11 @@
 
 /* Latest Release Section */
 .latest-release {
-  padding: 80px 0;
+  padding: 80px 0; /* Remove horizontal padding since container handles it */
   background: linear-gradient(135deg, rgba(0, 255, 65, 0.05) 0%, transparent 100%);
   position: relative;
+  max-width: 1200px; /* Restore max-width for content */
+  margin: 0 auto; /* Center the content */
 }
 
 .release-content {
@@ -371,9 +516,11 @@
 
 /* Newsletter Section */
 .newsletter-section {
-  padding: 80px 0;
+  padding: 80px 0; /* Remove horizontal padding since container handles it */
   text-align: center;
   background: rgba(0, 255, 65, 0.02);
+  max-width: 1200px; /* Restore max-width for content */
+  margin: 0 auto; /* Center the content */
 }
 
 .newsletter-content {
@@ -424,16 +571,71 @@
   color: var(--text-muted);
 }
 
+.newsletter-status {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.newsletter-status.loading {
+  color: var(--accent-green);
+}
+
+.newsletter-status.success {
+  color: var(--accent-green);
+  font-weight: 600;
+}
+
+.newsletter-status.error {
+  color: #ff4444;
+  font-weight: 600;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .hero {
     flex-direction: column;
     text-align: center;
-    gap: 40px;
+    padding: 20px 0;
+    margin-top: -70px; /* Keep extending to top on mobile */
+    padding-top: 90px; /* Adjust padding for mobile */
+    overflow: hidden; /* Keep video contained on mobile */
+    width: 100vw; /* Keep full viewport width on mobile */
+    margin-left: calc(-50vw + 50%); /* Keep extending to edges on mobile */
+    max-width: none; /* Keep no max-width on mobile */
+    min-height: 110vh; /* Keep extended height on mobile */
+  }
+
+  .hero-video-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw; /* Keep full viewport width on mobile */
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .hero-video {
+    object-position: center center;
+  }
+
+  .hero-content {
+    padding-left: 20px; /* Reduce left padding on mobile */
+    padding-right: 20px; /* Add right padding for balance */
+  }
+
+  .music-section,
+  .latest-release,
+  .newsletter-section {
+    padding: 60px 0; /* Remove horizontal padding since container handles it */
+    max-width: 1200px; /* Keep max-width on mobile */
+    margin: 0 auto; /* Keep centering on mobile */
   }
 
   .title-line {
-    font-size: 3rem;
+    font-size: 2.5rem;
   }
 
   .title-subtitle {
@@ -450,18 +652,18 @@
   }
 
   .pulse-ring {
-    width: 150px;
-    height: 150px;
-  }
-
-  .pulse-ring.delay-1 {
     width: 200px;
     height: 200px;
   }
 
-  .pulse-ring.delay-2 {
+  .pulse-ring.delay-1 {
     width: 250px;
     height: 250px;
+  }
+
+  .pulse-ring.delay-2 {
+    width: 300px;
+    height: 300px;
   }
 
   .section-title {
@@ -499,6 +701,19 @@
 }
 
 @media (max-width: 480px) {
+  .hero-content {
+    padding-left: 15px; /* Further reduce left padding on smaller mobile */
+    padding-right: 15px; /* Add right padding for balance */
+  }
+
+  .music-section,
+  .latest-release,
+  .newsletter-section {
+    padding: 40px 0; /* Remove horizontal padding since container handles it */
+    max-width: 1200px; /* Keep max-width on smaller mobile */
+    margin: 0 auto; /* Keep centering on smaller mobile */
+  }
+
   .title-line {
     font-size: 2.5rem;
   }

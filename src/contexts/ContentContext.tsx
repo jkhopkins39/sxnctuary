@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react'
 
 interface ContentField {
   id: string
@@ -10,8 +10,9 @@ interface ContentField {
 
 interface ContentContextType {
   contentFields: ContentField[]
-  updateContent: (id: string, value: string) => void
+  updateContent: (id: string, value: string) => Promise<void>
   getContent: (id: string) => string
+  isLoading: boolean
 }
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined)
@@ -27,6 +28,8 @@ export const useContent = () => {
 interface ContentProviderProps {
   children: ReactNode
 }
+
+const API_BASE_URL = 'http://localhost:3001/api'
 
 export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) => {
   const [contentFields, setContentFields] = useState<ContentField[]>([
@@ -87,13 +90,74 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
       location: 'Footer'
     }
   ])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const updateContent = (id: string, value: string) => {
-    setContentFields(prev => 
-      prev.map(field => 
-        field.id === id ? { ...field, value } : field
-      )
-    )
+  // Load content from backend on component mount
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/content`)
+        if (response.ok) {
+          const contentData = await response.json()
+          
+          // Update content fields with data from backend
+          setContentFields(prev => 
+            prev.map(field => {
+              const savedContent = contentData.find((c: any) => c.id === field.id)
+              return savedContent ? { ...field, value: savedContent.value } : field
+            })
+          )
+        }
+      } catch (error) {
+        console.error('Error loading content:', error)
+        // If there's an error loading content, try to seed it
+        try {
+          await fetch(`${API_BASE_URL}/seed-content`, { method: 'POST' })
+          // Reload content after seeding
+          const response = await fetch(`${API_BASE_URL}/content`)
+          if (response.ok) {
+            const contentData = await response.json()
+            setContentFields(prev => 
+              prev.map(field => {
+                const savedContent = contentData.find((c: any) => c.id === field.id)
+                return savedContent ? { ...field, value: savedContent.value } : field
+              })
+            )
+          }
+        } catch (seedError) {
+          console.error('Error seeding content:', seedError)
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadContent()
+  }, [])
+
+  const updateContent = async (id: string, value: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/content`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, value })
+      })
+
+      if (response.ok) {
+        setContentFields(prev => 
+          prev.map(field => 
+            field.id === id ? { ...field, value } : field
+          )
+        )
+      } else {
+        throw new Error('Failed to save content')
+      }
+    } catch (error) {
+      console.error('Error updating content:', error)
+      throw error
+    }
   }
 
   const getContent = (id: string): string => {
@@ -104,7 +168,8 @@ export const ContentProvider: React.FC<ContentProviderProps> = ({ children }) =>
   const value: ContentContextType = {
     contentFields,
     updateContent,
-    getContent
+    getContent,
+    isLoading
   }
 
   return (
