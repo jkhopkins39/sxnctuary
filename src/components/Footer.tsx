@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
           <div className="footer-section">
             <h3 className="footer-title">SXNCTUARY</h3>
             <p className="footer-description">
-              {getContent('footer-description')}
+              expression.
             </p>
           </div>
 

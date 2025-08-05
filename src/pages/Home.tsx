@@ -234,11 +234,7 @@ const Home: React.FC = () => {
         <div className="hero-content">
           <h1 className="hero-title">
             <span className="title-line">{getContent('hero-title')}</span>
-            <span className="title-subtitle">{getContent('hero-subtitle')}</span>
           </h1>
-          <p className="hero-description">
-            {getContent('hero-description')}
-          </p>
           <div className="hero-buttons">
             <a href="#music" className="btn btn-primary">
               Listen Now
@@ -290,7 +286,6 @@ const Home: React.FC = () => {
                 />
               </div>
               <h3 className="platform-name">{platform.name}</h3>
-              <p className="platform-description">{platform.description}</p>
               <div className="platform-glow"></div>
             </a>
           ))}
@@ -303,9 +298,6 @@ const Home: React.FC = () => {
           <div className="release-info">
             <h2 className="release-title">Latest Release</h2>
             <h3 className="release-name">"{getContent('latest-release-name')}"</h3>
-            <p className="release-description">
-              {getContent('latest-release-description')}
-            </p>
             <div className="release-stats">
               <div className="stat">
                 <span className="stat-number">1</span>
