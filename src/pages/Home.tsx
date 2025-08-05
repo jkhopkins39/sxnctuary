@@ -72,9 +72,28 @@ const Home: React.FC = () => {
 
     try {
       // EmailJS configuration - you'll need to add these to your .env file
-      const serviceId = process.env.REACT_APP_EMAILJS_SERVICE_ID || 'your_service_id'
-      const templateId = process.env.REACT_APP_EMAILJS_TEMPLATE_ID || 'your_template_id'
-      const publicKey = process.env.REACT_APP_EMAILJS_PUBLIC_KEY || 'your_public_key'
+      const serviceId = process.env.REACT_APP_EMAILJS_SERVICE_ID
+      const templateId = process.env.REACT_APP_EMAILJS_TEMPLATE_ID
+      const publicKey = process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+
+      // Debug: Log environment variables (remove in production)
+      console.log('EmailJS Config:', {
+        serviceId: serviceId ? 'Set' : 'Not Set',
+        templateId: templateId ? 'Set' : 'Not Set',
+        publicKey: publicKey ? 'Set' : 'Not Set'
+      })
+
+      // Check if all required environment variables are set
+      if (!serviceId || !templateId || !publicKey) {
+        console.error('Missing EmailJS environment variables:', {
+          serviceId: !!serviceId,
+          templateId: !!templateId,
+          publicKey: !!publicKey
+        })
+        setNewsletterStatus('error')
+        setTimeout(() => setNewsletterStatus('idle'), 3000)
+        return
+      }
 
       const templateParams = {
         to_email: 'sxnctuaryy8@gmail.com',
@@ -83,7 +102,11 @@ const Home: React.FC = () => {
         subscribed_at: new Date().toLocaleString()
       }
 
+      console.log('Sending email with params:', templateParams)
+
       const result = await emailjs.send(serviceId, templateId, templateParams, publicKey)
+      
+      console.log('EmailJS result:', result)
       
       if (result.status === 200) {
         setNewsletterStatus('success')
@@ -334,6 +357,16 @@ const Home: React.FC = () => {
             {newsletterStatus === 'loading' && <p className="newsletter-status loading">Loading...</p>}
             {newsletterStatus === 'success' && <p className="newsletter-status success">Subscribed!</p>}
             {newsletterStatus === 'error' && <p className="newsletter-status error">Failed to subscribe.</p>}
+            
+            {/* Temporary Debug Info - Remove after testing */}
+            {process.env.NODE_ENV === 'development' && (
+              <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+                <p>Debug Info:</p>
+                <p>Service ID: {process.env.REACT_APP_EMAILJS_SERVICE_ID ? '✅ Set' : '❌ Not Set'}</p>
+                <p>Template ID: {process.env.REACT_APP_EMAILJS_TEMPLATE_ID ? '✅ Set' : '❌ Not Set'}</p>
+                <p>Public Key: {process.env.REACT_APP_EMAILJS_PUBLIC_KEY ? '✅ Set' : '❌ Not Set'}</p>
+              </div>
+            )}
           </form>
         </div>
       </section>
