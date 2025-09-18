@@ -30,9 +30,13 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   useEffect(() => {
     // Check if admin is already logged in from localStorage
     const adminToken = localStorage.getItem('adminToken')
+    console.log('Checking admin token:', adminToken)
     if (adminToken) {
+      console.log('Admin token found, setting admin state')
       setIsAuthenticated(true)
       setIsAdmin(true)
+    } else {
+      console.log('No admin token found')
     }
     setLoading(false)
   }, [])
@@ -44,12 +48,16 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       const expectedUsername = import.meta.env.VITE_ADMIN_USERNAME || 'admin'
       const expectedPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'password'
 
+      console.log('Login attempt:', { username, expectedUsername, passwordMatch: password === expectedPassword })
+
       if (username === expectedUsername && password === expectedPassword) {
+        console.log('Login successful, setting admin state')
         setIsAuthenticated(true)
         setIsAdmin(true)
         localStorage.setItem('adminToken', 'authenticated')
         return true
       } else {
+        console.log('Login failed - credentials mismatch')
         return false
       }
     } catch (error) {

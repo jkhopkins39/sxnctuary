@@ -7,6 +7,8 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const FormData = require('form-data');
+const crypto = require('crypto');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const prisma = new PrismaClient();
@@ -360,6 +362,82 @@ app.post('/api/seed-content', async (req, res) => {
   } catch (error) {
     console.error('Error seeding content:', error);
     res.status(500).json({ error: 'Failed to seed content' });
+  }
+});
+
+// Stripe payment intent endpoint
+app.post('/api/create-payment-intent', async (req, res) => {
+  try {
+    const { amount, items } = req.body;
+    
+    // Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount, // amount in cents
+      currency: 'usd',
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      metadata: {
+        items: JSON.stringify(items)
+      }
+    });
+    
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (error) {
+    console.error('Error creating payment intent:', error);
+    res.status(500).json({ error: 'Failed to create payment intent' });
+  }
+});
+
+// Order processing endpoints
+app.post('/api/orders', async (req, res) => {
+  try {
+    const { stripeOrderId, stripeDetails, cart, customerInfo } = req.body;
+    
+    // Create order in database
+    const order = await prisma.order.create({
+      data: {
+        paypalOrderId: stripeOrderId, // Reusing the field name for compatibility
+        status: 'completed',
+        total: stripeDetails.amount.toString(), // Convert to string as required by schema
+        customerEmail: customerInfo?.email || 'stripe@example.com',
+        customerName: customerInfo?.name || 'Stripe User',
+        items: JSON.stringify(cart),
+        paypalDetails: JSON.stringify(stripeDetails) // Reusing the field name for compatibility
+      }
+    });
+    
+    // Here you would typically:
+    // 1. Send confirmation email to customer
+    // 2. Send order notification to admin
+    // 3. Update inventory
+    // 4. Generate shipping labels
+    
+    console.log('Order created:', order.id);
+    
+    res.status(201).json({
+      success: true,
+      orderId: order.id,
+      message: 'Order processed successfully'
+    });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ error: 'Failed to process order' });
+  }
+});
+
+app.get('/api/orders', async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json(orders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ error: 'Failed to fetch orders' });
   }
 });
 

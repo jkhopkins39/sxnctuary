@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAdmin } from '../contexts/AdminContext'
 import { useContent } from '../contexts/ContentContext'
 import { DatabaseService, Product } from '../services/database'
@@ -9,6 +10,7 @@ import './Merch.css'
 
 
 const Merch: React.FC = () => {
+  const navigate = useNavigate()
   const { isAdmin } = useAdmin()
   const { getContent } = useContent()
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -28,7 +30,7 @@ const Merch: React.FC = () => {
     { id: 'music', name: 'Music' }
   ]
 
-  // Load products from database
+  // Load products from database and cart from localStorage
   useEffect(() => {
     const loadProducts = async () => {
       try {
@@ -49,6 +51,16 @@ const Merch: React.FC = () => {
       }
     }
 
+    // Load cart from localStorage
+    const savedCart = localStorage.getItem('cart')
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart))
+      } catch (error) {
+        console.error('Error loading cart from localStorage:', error)
+      }
+    }
+
     loadProducts()
   }, [])
 
@@ -58,9 +70,11 @@ const Merch: React.FC = () => {
 
   // Admin functions
   const handleAddProduct = () => {
+    console.log('Add product clicked, isAdmin:', isAdmin)
     setEditingProduct(null)
     setModalMode('create')
     setShowEditModal(true)
+    console.log('Modal should be open, showEditModal:', true)
   }
 
   const handleEditProduct = (product: Product) => {
@@ -83,8 +97,10 @@ const Merch: React.FC = () => {
   }
 
   const handleSaveProduct = async (product: Product) => {
+    console.log('Saving product:', product)
     try {
       if (modalMode === 'create') {
+        console.log('Creating new product...')
         const newProduct = await DatabaseService.createProduct({
           name: product.name,
           description: product.description,
@@ -94,10 +110,13 @@ const Merch: React.FC = () => {
           sizes: product.sizes,
           colors: product.colors
         })
+        console.log('New product created:', newProduct)
         if (newProduct) {
           setProducts([newProduct, ...products])
+          console.log('Product added to state')
         }
       } else {
+        console.log('Updating existing product...')
         const updatedProduct = await DatabaseService.updateProduct(product.id, {
           name: product.name,
           description: product.description,
@@ -107,6 +126,7 @@ const Merch: React.FC = () => {
           sizes: product.sizes,
           colors: product.colors
         })
+        console.log('Product updated:', updatedProduct)
         if (updatedProduct) {
           setProducts(products.map(p => p.id === product.id ? updatedProduct : p))
         }
@@ -122,10 +142,14 @@ const Merch: React.FC = () => {
   }
 
   const addToCart = (productId: number) => {
-    setCart(prev => ({
-      ...prev,
-      [productId]: (prev[productId] || 0) + 1
-    }))
+    setCart(prev => {
+      const newCart = {
+        ...prev,
+        [productId]: (prev[productId] || 0) + 1
+      }
+      localStorage.setItem('cart', JSON.stringify(newCart))
+      return newCart
+    })
   }
 
   const removeFromCart = (productId: number) => {
@@ -136,8 +160,23 @@ const Merch: React.FC = () => {
       } else {
         delete newCart[productId]
       }
+      localStorage.setItem('cart', JSON.stringify(newCart))
       return newCart
     })
+  }
+
+  const removeItemFromCart = (productId: number) => {
+    setCart(prev => {
+      const newCart = { ...prev }
+      delete newCart[productId]
+      localStorage.setItem('cart', JSON.stringify(newCart))
+      return newCart
+    })
+  }
+
+  const clearCart = () => {
+    setCart({})
+    localStorage.removeItem('cart')
   }
 
   const getCartTotal = () => {
@@ -163,18 +202,72 @@ const Merch: React.FC = () => {
             + Add New Product
           </button>
         )}
+        <div style={{ marginTop: '10px', color: 'white', fontSize: '12px' }}>
+          Admin status: {isAdmin ? 'Logged in' : 'Not logged in'}
+        </div>
       </div>
 
       {/* Cart Summary */}
       {getCartItemCount() > 0 && (
         <div className="cart-summary">
-          <div className="cart-info">
-            <span className="cart-count">{getCartItemCount()} items</span>
-            <span className="cart-total">${getCartTotal().toFixed(2)}</span>
+          <div className="cart-header">
+            <h3>Shopping Cart ({getCartItemCount()} items)</h3>
+            <button className="clear-cart-btn" onClick={clearCart}>
+              Clear Cart
+            </button>
           </div>
-          <button className="btn btn-primary checkout-btn">
-            Checkout
-          </button>
+          
+          <div className="cart-items-list">
+            {Object.entries(cart).map(([productId, quantity]) => {
+              const product = products.find(p => p.id === parseInt(productId))
+              if (!product) return null
+              
+              return (
+                <div key={product.id} className="cart-item-row">
+                  <div className="cart-item-info">
+                    <span className="cart-item-name">{product.name}</span>
+                    <span className="cart-item-price">${product.price}</span>
+                  </div>
+                  <div className="cart-item-controls">
+                    <div className="quantity-controls">
+                      <button 
+                        className="quantity-btn"
+                        onClick={() => removeFromCart(product.id)}
+                      >
+                        -
+                      </button>
+                      <span className="quantity">{quantity}</span>
+                      <button 
+                        className="quantity-btn"
+                        onClick={() => addToCart(product.id)}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button 
+                      className="remove-item-btn"
+                      onClick={() => removeItemFromCart(product.id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          
+          <div className="cart-footer">
+            <div className="cart-total">
+              <span>Total:</span>
+              <span className="total-amount">${getCartTotal().toFixed(2)}</span>
+            </div>
+            <button 
+              className="btn btn-primary checkout-btn"
+              onClick={() => navigate('/checkout', { state: { cart } })}
+            >
+              Checkout
+            </button>
+          </div>
         </div>
       )}
 
@@ -351,6 +444,7 @@ const Merch: React.FC = () => {
         isOpen={showDetailModal}
         onClose={() => setShowDetailModal(false)}
       />
+
     </div>
   )
 }

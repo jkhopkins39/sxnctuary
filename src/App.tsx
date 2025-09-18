@@ -7,6 +7,7 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
 import Merch from './pages/Merch'
+import Checkout from './pages/Checkout'
 import ContentManager from './components/ContentManager'
 import './styles/App.css'
 
@@ -21,10 +22,11 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/merch" element={<Merch />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/admin" element={<ContentManager />} />
               </Routes>
             </main>
             <Footer />
-            <ContentManager />
           </div>
         </LatestReleaseImageProvider>
       </ContentProvider>

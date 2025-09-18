@@ -1,0 +1,128 @@
+.stripe-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.payment-info {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.payment-info h3 {
+  color: var(--accent-green);
+  margin-bottom: 0.5rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+}
+
+.amount {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.payment-error {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid #ff4444;
+  border-radius: 8px;
+  padding: 1rem;
+  color: #ff4444;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.payment-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pay-button {
+  flex: 1;
+  background: linear-gradient(135deg, #6772e5 0%, #5469d4 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.pay-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(103, 114, 229, 0.3);
+}
+
+.pay-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancel-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Stripe Elements customization */
+.stripe-form .StripeElement {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  color: var(--text-primary);
+}
+
+.stripe-form .StripeElement--focus {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+}
+
+.stripe-form .StripeElement--invalid {
+  border-color: #ff4444;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .stripe-form {
+    padding: 1rem;
+  }
+  
+  .payment-actions {
+    flex-direction: column;
+  }
+  
+  .pay-button,
+  .cancel-button {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+}

@@ -17,6 +17,7 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
   onSave, 
   mode 
 }) => {
+  console.log('ProductEditModal props:', { isOpen, mode, product: product?.name })
   const [formData, setFormData] = useState<CreateProductData>({
     name: product?.name || '',
     description: product?.description || '',
@@ -35,6 +36,7 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('Form submitted, mode:', mode)
     
     const processedData = {
       ...formData,
@@ -43,12 +45,16 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
       colors: colorsInput.split(',').map(c => c.trim()).filter(c => c)
     }
 
+    console.log('Processed data:', processedData)
+
     if (mode === 'edit' && product) {
+      console.log('Saving edited product')
       onSave({
         ...product,
         ...processedData
       })
     } else {
+      console.log('Saving new product')
       onSave({
         id: Date.now(), // Temporary ID for new products
         ...processedData
@@ -100,7 +106,12 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
     onClose()
   }
 
-  if (!isOpen) return null
+  if (!isOpen) {
+    console.log('Modal not open, returning null')
+    return null
+  }
+  
+  console.log('Rendering modal')
 
   return (
     <div className="product-modal-overlay" onClick={handleClose}>

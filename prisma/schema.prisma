@@ -38,3 +38,16 @@ model NewsletterSubscription {
   email       String   @unique
   subscribedAt DateTime @default(now())
 }
+
+model Order {
+  id            Int      @id @default(autoincrement())
+  paypalOrderId String   @unique
+  status        String   // completed, pending, cancelled, refunded
+  total         String   // Store as string to avoid floating point issues
+  customerEmail String
+  customerName  String
+  items         String   // JSON string of cart items
+  paypalDetails String   // JSON string of PayPal response
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
