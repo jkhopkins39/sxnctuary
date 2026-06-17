@@ -5,7 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   define: {
-    'process.env': process.env
+    'import.meta.env.SUPABASE_URL': JSON.stringify(process.env.SUPABASE_URL),
+    'import.meta.env.SUPABASE_PUBLISHABLE_KEY': JSON.stringify(process.env.SUPABASE_PUBLISHABLE_KEY),
   },
   server: {
     port: 5173
