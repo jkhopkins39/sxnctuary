@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAdmin } from '../contexts/AdminContext'
 import { useContent } from '../contexts/ContentContext'
 import ContentEditModal from './ContentEditModal'
@@ -13,8 +13,14 @@ interface ContentField {
 }
 
 const ContentManager: React.FC = () => {
-  const { isAdmin } = useAdmin()
+  const { isAdmin, loading } = useAdmin()
   const { contentFields, updateContent } = useContent()
+
+  useEffect(() => {
+    if (!loading && !isAdmin) {
+      window.location.href = 'https://hoppytech.com/portal'
+    }
+  }, [loading, isAdmin])
   const [showContentModal, setShowContentModal] = useState(false)
   const [selectedContent, setSelectedContent] = useState<ContentField | null>(null)
 
@@ -32,7 +38,7 @@ const ContentManager: React.FC = () => {
     setSelectedContent(null)
   }
 
-  if (!isAdmin) return null
+  if (loading || !isAdmin) return null
 
   return (
     <>

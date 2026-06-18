@@ -14,7 +14,6 @@ if (supabaseUrl && supabaseKey) {
 interface AdminContextType {
   isAuthenticated: boolean
   isAdmin: boolean
-  login: (email: string, password: string) => Promise<boolean>
   logout: () => void
   loading: boolean
 }
@@ -82,24 +81,15 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
     return () => subscription.unsubscribe()
   }, [])
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    if (!supabase) return false
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error || !isAuthorisedSession(data.session)) {
-      if (!error) await supabase.auth.signOut()
-      return false
-    }
-    return true
-  }
-
   const logout = async () => {
     if (supabase) await supabase.auth.signOut()
     setIsAuthenticated(false)
     setIsAdmin(false)
+    window.location.href = 'https://hoppytech.com/portal?logout=1'
   }
 
   return (
-    <AdminContext.Provider value={{ isAuthenticated, isAdmin, login, logout, loading }}>
+    <AdminContext.Provider value={{ isAuthenticated, isAdmin, logout, loading }}>
       {children}
     </AdminContext.Provider>
   )

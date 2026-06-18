@@ -1,30 +1,12 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useAdmin } from '../contexts/AdminContext'
 import { useContent } from '../contexts/ContentContext'
 import './Footer.css'
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear()
-  const { isAdmin, isAuthenticated, login, logout } = useAdmin()
+  const { isAdmin, logout } = useAdmin()
   const { getContent } = useContent()
-  const [showLoginModal, setShowLoginModal] = useState(false)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [loginError, setLoginError] = useState('')
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoginError('')
-    
-    const success = await login(username, password)
-    if (success) {
-      setShowLoginModal(false)
-      setUsername('')
-      setPassword('')
-    } else {
-      setLoginError('Invalid credentials')
-    }
-  }
 
   return (
     <footer className="footer">
@@ -107,15 +89,15 @@ const Footer: React.FC = () => {
               <span className="footer-credits"> Designed with 💚 and code</span>
             </p>
             {isAdmin ? (
-              <button 
+              <button
                 onClick={logout}
                 className="admin-logout-btn"
               >
                 Admin Logout
               </button>
             ) : (
-              <button 
-                onClick={() => setShowLoginModal(true)}
+              <button
+                onClick={() => { window.location.href = 'https://hoppytech.com/portal' }}
                 className="admin-login-btn"
               >
                 Admin Login
@@ -125,67 +107,6 @@ const Footer: React.FC = () => {
         </div>
       </div>
       
-      {/* Admin Login Modal */}
-      {showLoginModal && (
-        <div className="admin-modal-overlay" onClick={() => setShowLoginModal(false)}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <h3>Admin Login</h3>
-              <button 
-                className="close-btn"
-                onClick={() => setShowLoginModal(false)}
-              >
-                ×
-              </button>
-            </div>
-            
-            <form onSubmit={handleLogin} className="admin-login-form">
-              <div className="form-group">
-                <label htmlFor="username">Username</label>
-                <input
-                  type="text"
-                  id="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="password">Password</label>
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              
-              {loginError && (
-                <div className="login-error">
-                  {loginError}
-                </div>
-              )}
-              
-              <div className="form-actions">
-                <button type="submit" className="login-btn">
-                  Login
-                </button>
-                <button 
-                  type="button" 
-                  className="cancel-btn"
-                  onClick={() => setShowLoginModal(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      
-
     </footer>
   )
 }
