@@ -85,8 +85,18 @@ const Footer: React.FC = () => {
           <div className="footer-line"></div>
           <div className="footer-bottom-content">
             <p className="footer-copyright">
-              © {currentYear} SXNCTUARY. All rights reserved. | 
-              <span className="footer-credits"> Designed with 💚 and code</span>
+              © {currentYear} SXNCTUARY. All rights reserved. |{" "}
+              <span className="footer-credits">
+                Designed with 💚 and code by{" "}
+                <a
+                  href="https://www.hoppytech.com/?utm_source=sxnctuary"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="footer-credit-link"
+                >
+                  Hoppy Tech
+                </a>
+              </span>
             </p>
             {isAdmin ? (
               <button
